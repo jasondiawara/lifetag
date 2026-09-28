@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>LIFETAG</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:#f5f5f7;color:#111}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:28px 18px 110px}
+h1{font-size:34px;margin:0 0 4px;letter-spacing:-1px}.sub{color:#777;margin-bottom:28px}
+.card{background:white;border-radius:22px;padding:22px;box-shadow:0 5px 25px #0000000b;margin-bottom:16px}
+.stats{display:flex;gap:12px}.stat{flex:1;background:#f2f2f7;border-radius:17px;padding:16px}.num{font-size:25px;font-weight:700}.label{font-size:13px;color:#777;margin-top:4px}
+button{width:100%;border:0;border-radius:16px;padding:16px;font-size:16px;font-weight:650;background:#111;color:white;cursor:pointer}
+.secondary{background:#eee;color:#111;margin-top:10px}.empty{text-align:center;color:#777;padding:25px 5px}
+.product{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid #eee}.product:last-child{border-bottom:0}.icon{width:52px;height:52px;border-radius:14px;background:#f1f1f4;display:grid;place-items:center;font-size:25px}.pname{font-weight:650}.meta{font-size:13px;color:#777;margin-top:3px}
+.addbox{background:white;border-radius:18px;margin-top:18px;box-shadow:0 5px 25px #0000000b;overflow:hidden}.addbox summary{list-style:none;padding:17px;text-align:center;background:#111;color:#fff;font-size:16px;font-weight:650;cursor:pointer}.addbox summary::-webkit-details-marker{display:none}.addcontent{padding:18px}
+input{width:100%;padding:15px;border:1px solid #ddd;border-radius:14px;font-size:16px;margin:7px 0 12px}.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>LIFETAG</h1><div class="sub">Dein Besitz. Ein Ort.</div>
+
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><div class="num" id="count">0</div><div class="label">Produkte</div></div>
+      <div class="stat"><div class="num" id="value">0,00 €</div><div class="label">Gesamtwert</div></div>
+    </div>
+  </div>
+
+  <details class="addbox">
+  <summary>＋ Produkt hinzufügen</summary>
+  <div class="addcontent">
+    <button type="button" onclick="showForm()">✎ Manuell eingeben</button>
+    <button type="button" class="secondary" onclick="document.getElementById('photoInput').click()">📷 Produkt fotografieren</button>
+    <input id="photoInput" class="hidden" type="file" accept="image/*" capture="environment">
+    <div id="form" class="hidden">
+      <label>Produktname</label>
+      <input id="name" placeholder="z. B. iPhone 18 Pro Max" autocomplete="off">
+      <label>Kaufpreis (€)</label>
+      <input id="price" type="number" inputmode="decimal" step="0.01" placeholder="1449">
+      <button type="button" onclick="saveProduct()">Produkt speichern</button>
+    </div>
+  </div>
+</details>
+
+<div class="card" style="margin-top:22px">
+  <h2 style="margin:0 0 4px">Meine Produkte</h2>
+  <div id="products" class="empty">Noch keine Produkte vorhanden.</div>
+</div>
+</div>
+<script>
+const key="lifetag_products";
+let products=JSON.parse(localStorage.getItem(key)||"[]");
+const euro=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n);
+function render(){
+ document.getElementById("count").textContent=products.length;
+ document.getElementById("value").textContent=euro(products.reduce((s,p)=>s+p.price,0));
+ const el=document.getElementById("products");
+ if(!products.length){el.className="empty";el.textContent="Noch keine Produkte vorhanden.";return}
+ el.className="";
+ el.innerHTML=products.map(p=>`<div class="product"><div class="icon">📦</div><div><div class="pname">${escapeHtml(p.name)}</div><div class="meta">${euro(p.price)}</div></div></div>`).join("");
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function showForm(){
+ const form=document.getElementById("form");
+ form.classList.remove("hidden");
+ document.getElementById("name").focus();
+}
+function saveProduct(){
+ const name=document.getElementById("name").value.trim();
+ const price=parseFloat(document.getElementById("price").value)||0;
+ if(!name){alert("Bitte einen Produktnamen eingeben.");return}
+ products.push({name,price,date:new Date().toISOString()});
+ localStorage.setItem(key,JSON.stringify(products));
+ document.getElementById("name").value="";
+ document.getElementById("price").value="";
+ document.getElementById("form").classList.add("hidden");
+ document.querySelector(".addbox").open=false;
+ render();
+}
+render();
+</script>
+</body>
+</html>
